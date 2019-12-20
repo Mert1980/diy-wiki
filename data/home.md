@@ -1,8 +1,8 @@
-# Welcome!
+# Welcome! 
 
-This is your own wiki.
+This is my wiki. My name is Mert.
 
-This is how you change stuff!!
+You can type anything here
 
 Here's the [about](about) page.
 

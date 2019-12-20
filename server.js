@@ -7,18 +7,22 @@ const fs = require('fs').promises;
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
+// app.use(bodyParser.json());
+// create application/x-www-form-urlencoded parser
+// var urlencodedParser = bodyParser.urlencoded({ extended: false })
+// app.use(bodyParser.urlencoded({ extended: false }))
 // Uncomment this out once you've made your first route.
-// app.use(express.static(path.join(__dirname, 'client', 'build')));
+app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // some helper functions you can use
 async function readFile(filePath) {
   return await fs.readFile(filePath, 'utf-8');
 }
-async function writeFile(filePath) {
-  return await fs.writeFile(filePath, 'utf-8');
-}
+// async function writeFile(filePath) {
+//   return await fs.writeFile(filePath, 'utf-8');
+// }
 async function readDir(dirPath) {
   return await fs.readDir(dirPath);
 }
@@ -37,24 +41,45 @@ function jsonError(res, message) {
   res.json({ status: 'error', message });
 }
 
-app.get('/', (req, res) => {
-  res.json({ wow: 'it works!' });
-});
-
-// If you want to see the wiki client, run npm install && npm build in the client folder,
-// then comment the line above and uncomment out the lines below and comment the line above.
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+// app.get('/', (req, res) => {
+//   res.json({ wow: 'it works!' });
 // });
 
 // GET: '/api/page/:slug'
 // success response: {status: 'ok', body: '<file contents>'}
 // failure response: {status: 'error', message: 'Page does not exist.'}
 
+// Set data folder static
+app.use(express.static(path.join(__dirname, 'data')));
+
+app.get('/api/page/:slug', async (req, res) => {
+  try {
+    let filePath = await slugToPath(req.params.slug);
+    let body = await readFile(filePath);
+    await res.json({ status: 'ok', body });
+  } catch {
+    await jsonError(res, 'Page does not exist.');
+  }
+});
+
 // POST: '/api/page/:slug'
 // body: {body: '<file text content>'}
 // success response: {status: 'ok'}
 // failure response: {status: 'error', message: 'Could not write page.'}
+app.post('/api/page/:slug', async (req, res) => {
+  try {
+    let filePath = await slugToPath(req.params.slug);
+
+    const bodyObj = JSON.stringify(req.body);
+    let bodyJSON = JSON.parse(bodyObj);
+    let bodyText = bodyJSON.body;
+    
+    await fs.writeFile(filePath, bodyText);
+    await res.JSON({ status: 'ok', bodyText });
+  } catch {
+    await jsonError(res, 'Could not write page.');
+  }
+});
 
 // GET: '/api/pages/all'
 // success response: {status:'ok', pages: ['fileName', 'otherFileName']}
@@ -70,6 +95,12 @@ app.get('/', (req, res) => {
 // success response: {status:'ok', tag: 'tagName', pages: ['tagName', 'otherTagName']}
 //  file names do not have .md, just the name!
 // failure response: no failure response
+
+// If you want to see the wiki client, run npm install && npm build in the client folder,
+// then comment the line above and uncomment out the lines below and comment the line above.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Wiki app is serving at http://localhost:${port}`));
