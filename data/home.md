@@ -2,7 +2,11 @@
 
 This is my wiki. My name is Mert.
 
-You can type anything here
+You can type anything here.
+
+Mert
+
+Hello World
 
 Here's the [about](about) page.
 

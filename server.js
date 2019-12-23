@@ -9,9 +9,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-// app.use(bodyParser.json());
-// create application/x-www-form-urlencoded parser
-// var urlencodedParser = bodyParser.urlencoded({ extended: false })
+
 // app.use(bodyParser.urlencoded({ extended: false }))
 // Uncomment this out once you've made your first route.
 app.use(express.static(path.join(__dirname, 'client', 'build')));
@@ -23,9 +21,9 @@ async function readFile(filePath) {
 // async function writeFile(filePath) {
 //   return await fs.writeFile(filePath, 'utf-8');
 // }
-async function readDir(dirPath) {
-  return await fs.readDir(dirPath);
-}
+// async function readDir(dirPath) {
+//   return await fs.readdir(dirPath);
+// }
 
 // some more helper functions
 const DATA_DIR = 'data';
@@ -41,10 +39,6 @@ function jsonError(res, message) {
   res.json({ status: 'error', message });
 }
 
-// app.get('/', (req, res) => {
-//   res.json({ wow: 'it works!' });
-// });
-
 // GET: '/api/page/:slug'
 // success response: {status: 'ok', body: '<file contents>'}
 // failure response: {status: 'error', message: 'Page does not exist.'}
@@ -54,9 +48,10 @@ app.use(express.static(path.join(__dirname, 'data')));
 
 app.get('/api/page/:slug', async (req, res) => {
   try {
+    console.log(req.params)
     let filePath = await slugToPath(req.params.slug);
-    let body = await readFile(filePath);
-    await res.json({ status: 'ok', body });
+    let text = await readFile(filePath, 'utf-8');
+    await res.json({ status: 'ok', body: text });
   } catch {
     await jsonError(res, 'Page does not exist.');
   }
@@ -66,16 +61,13 @@ app.get('/api/page/:slug', async (req, res) => {
 // body: {body: '<file text content>'}
 // success response: {status: 'ok'}
 // failure response: {status: 'error', message: 'Could not write page.'}
-app.post('/api/page/:slug', async (req, res) => {
-  try {
-    let filePath = await slugToPath(req.params.slug);
 
-    const bodyObj = JSON.stringify(req.body);
-    let bodyJSON = JSON.parse(bodyObj);
-    let bodyText = bodyJSON.body;
-    
-    await fs.writeFile(filePath, bodyText);
-    await res.JSON({ status: 'ok', bodyText });
+app.post('/api/page/:slug', async (req, res) => {
+  let filePath = await slugToPath(req.params.slug);
+  const text = req.body.body;
+  try {
+    await fs.writeFile(filePath, text);
+    res.JSON({ status: 'ok' });
   } catch {
     await jsonError(res, 'Could not write page.');
   }
@@ -86,15 +78,40 @@ app.post('/api/page/:slug', async (req, res) => {
 //  file names do not have .md, just the name!
 // failure response: no failure response
 
+app.get('/api/:name/:total', async (req, res) => {
+  if (req.params.name === 'pages' && req.params.total === 'all') {
+    let names = await fs.readdir('data');
+    names = names.map(filenameWithExtension => path.parse(filenameWithExtension).name);
+    res.send({ status: 'ok', pages: names });
+  }
+});
+
 // GET: '/api/tags/all'
 // success response: {status:'ok', tags: ['tagName', 'otherTagName']}
 //  tags are any word in all documents with a # in front of it
 // failure response: no failure response
 
+
+
 // GET: '/api/tags/:tag'
 // success response: {status:'ok', tag: 'tagName', pages: ['tagName', 'otherTagName']}
 //  file names do not have .md, just the name!
 // failure response: no failure response
+
+app.get('/api/tags/:tag', async (req, res) => {
+  // try {
+  //   console.log(req.params)
+  //   let filePath = await slugToPath(req.params.tag);
+  //   let text = await readFile(filePath, 'utf-8');
+  //   console.log(text)
+  //   await res.json({ status: 'ok', body: text });
+  // } catch {
+  //   await jsonError(res, 'Page does not exist.');
+  // }
+});
+
+
+
 
 // If you want to see the wiki client, run npm install && npm build in the client folder,
 // then comment the line above and uncomment out the lines below and comment the line above.

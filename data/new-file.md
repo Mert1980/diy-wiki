@@ -1,3 +1,4 @@
-# Your New Page
 
-Write whatever you like here.
+ # This is new file
+
+My first wiki
